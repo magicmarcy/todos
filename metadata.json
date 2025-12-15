@@ -1,0 +1,10 @@
+{
+  "author": "magicmarcy",
+  "email": "",
+  "website": "https://magicmarcy.de",
+  "version": "1.0.0",
+  "releaseDate": "2025-11-13",
+  "license": "MIT",
+  "compatible": "3.0",
+  "notes": "Todo lists in backend view."
+}
