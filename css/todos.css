@@ -1,0 +1,114 @@
+/* Styles for the Todos admin view */
+
+.todos-title {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.todos-label {
+  margin-bottom: 0.15rem;
+  font-size: 0.85rem;
+}
+
+.todos-form-reset {
+  margin: 0;
+}
+
+.todos-inline-form {
+  display: inline;
+  margin: 0;
+}
+
+.todo-item-text {
+  display: inline;
+}
+
+.todo-item-text-done {
+  text-decoration: line-through;
+}
+
+/* Compact admin layout for the plugin */
+.todos-admin-compact .form-group {
+  margin-bottom: 0.25rem;
+}
+
+.todos-admin-compact #list-title {
+  padding: 0.2rem 0.4rem;
+  height: 30px;
+  font-size: 0.85rem;
+}
+
+.todos-admin-compact .btn {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.todos-admin-compact .btn i {
+  font-size: 1rem !important;
+}
+
+.todos-admin-compact .card {
+  margin-bottom: 0.5rem;
+}
+
+.todos-admin-compact .card-header {
+  cursor: move;
+  font-size: 0.9rem;
+}
+
+.todos-admin-compact .card-body {
+  padding: 0.4rem 0.5rem;
+}
+
+.todos-admin-compact .btn-group {
+  gap: 4px !important;
+}
+
+.todos-admin-compact .list-group {
+  margin-bottom: 0.4rem;
+}
+
+.todos-admin-compact .list-group-item {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+}
+
+.todos-admin-compact .list-group-item form {
+  margin-bottom: 0;
+}
+
+.todos-admin-compact .card-body p {
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.todos-admin-compact .input-group > .form-control {
+  height: 30px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
+}
+
+.todos-admin-compact .input-group-append .btn {
+  padding: 0.1rem 0.4rem;
+}
+
+/* Simple masonry-style columns */
+#todo-lists-container {
+  column-count: 2;
+  column-gap: 1.2rem;
+}
+
+.todo-list-column {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  -moz-column-break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+/* Single column on small screens */
+@media (max-width: 767.98px) {
+  #todo-lists-container {
+    column-count: 1;
+  }
+}

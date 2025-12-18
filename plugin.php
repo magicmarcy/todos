@@ -1,26 +1,59 @@
 <?php
 
+/**
+ * Todos plugin: manages todo lists within the Bludit admin.
+ *
+ * @license MIT
+ * 
+ * MIT License
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 class Todos extends Plugin
 {
+  /**
+   * JSON file name used to persist todo data inside the workspace.
+   *
+   * @var string
+   */
   private $dbFile = 'todos.json';
 
-  // Titel der Adminseite setzen
+  /**
+   * Handle incoming admin POST actions and set admin page metadata.
+   *
+   * @return void
+   */
   public function adminController()
   {
     global $layout;
 
     $layout['title'] = 'Todos | Bludit';
 
-    // POST Requests verarbeiten
+    // Process incoming POST requests
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-      // WICHTIG:
-      // Der CSRF-Token wird vom Bludit-Core geprueft.
-      // Wir muessen hier nur die Daten verarbeiten.
+      // IMPORTANT: CSRF token is validated by Bludit core; this block only processes the data.
 
       $data = $this->loadData();
 
-      // Sicherheitscheck: einfache action Variable
+      // Safety check: guard against missing action value
       $action = isset($_POST['action']) ? $_POST['action'] : '';
 
       switch ($action) {
@@ -54,17 +87,22 @@ class Todos extends Plugin
     }
   }
 
-  // Reihenfolge der Listen anhand eines ID-Arrays neu setzen
+  /**
+   * Reorder lists based on an array of list IDs received from the client.
+   *
+   * @param array $data Reference to stored todo data.
+   * @return void
+   */
   private function handleReorderLists(&$data)
   {
-    // Erwartet: order[] in $_POST
+    // Expects order[] in $_POST
     if (!isset($_POST['order']) || !is_array($_POST['order'])) {
       return;
     }
 
     $order = $_POST['order'];
 
-    // Map von ID auf Liste aufbauen
+    // Build map of id to list for faster lookup
     $listsById = array();
     foreach ($data['lists'] as $list) {
       $listsById[$list['id']] = $list;
@@ -72,7 +110,7 @@ class Todos extends Plugin
 
     $newLists = array();
 
-    // Zuerst alle IDs in der neuen Reihenfolge uebernehmen
+    // Add lists following the provided order first
     foreach ($order as $id) {
       if (isset($listsById[$id])) {
         $newLists[] = $listsById[$id];
@@ -80,8 +118,7 @@ class Todos extends Plugin
       }
     }
 
-    // Falls es aus irgendeinem Grund noch Listen gibt, die nicht im Order-Array waren,
-    // haengen wir sie hinten an, damit nichts verloren geht.
+    // Append any remaining lists that were missing from the order array
     foreach ($listsById as $list) {
       $newLists[] = $list;
     }
@@ -89,353 +126,37 @@ class Todos extends Plugin
     $data['lists'] = $newLists;
   }
 
-  // Adminseite rendern
+  /**
+   * Render the admin dashboard view.
+   *
+   * @return string
+   */
   public function adminView()
   {
     global $security;
 
     $data = $this->loadData();
     $lists = $data['lists'];
+    $csrfToken = $security->getTokenCSRF();
 
     ob_start();
-?>
+    include __DIR__ . '/views/dashboard.php';
 
-    <div class="row">
-      <div class="col-md-12 todos-admin-compact">
-        <h2 style="font-size:1.1rem;margin-bottom:0.5rem;">Todo lists</h2>
-
-        <style>
-          /* Kompakteres Layout fuer das gesamte Plugin */
-          .todos-admin-compact .form-group {
-            margin-bottom: 0.25rem;
-          }
-
-          .todos-admin-compact #list-title {
-            padding: 0.2rem 0.4rem;
-            height: 30px;
-            font-size: 0.85rem;
-          }
-
-          .todos-admin-compact .btn {
-            padding: 0.1rem 0.35rem;
-            font-size: 0.8rem;
-            line-height: 1.2;
-          }
-
-          .todos-admin-compact .btn i {
-            font-size: 1rem !important;
-          }
-
-          .todos-admin-compact .card {
-            margin-bottom: 0.5rem;
-          }
-
-          .todos-admin-compact .card-header {
-            cursor: move;
-            font-size: 0.9rem;
-          }
-
-          .todos-admin-compact .card-body {
-            padding: 0.4rem 0.5rem;
-          }
-
-          .todos-admin-compact .btn-group {
-            gap: 4px !important;
-          }
-
-          .todos-admin-compact .list-group {
-            margin-bottom: 0.4rem;
-          }
-
-          .todos-admin-compact .list-group-item {
-            padding: 0.25rem 0.4rem;
-            font-size: 0.85rem;
-          }
-
-          .todos-admin-compact .list-group-item form {
-            margin-bottom: 0;
-          }
-
-          .todos-admin-compact .card-body p {
-            margin-bottom: 0.25rem;
-            font-size: 0.85rem;
-          }
-
-          .todos-admin-compact .input-group>.form-control {
-            height: 30px;
-            padding: 0.2rem 0.4rem;
-            font-size: 0.85rem;
-          }
-
-          .todos-admin-compact .input-group-append .btn {
-            padding: 0.1rem 0.4rem;
-          }
-
-          /* Einfache Masonry-Darstellung */
-          #todo-lists-container {
-            column-count: 2;
-            column-gap: 1.2rem;
-          }
-
-          .todo-list-column {
-            break-inside: avoid;
-            -webkit-column-break-inside: avoid;
-            -moz-column-break-inside: avoid;
-            margin-bottom: 1.0rem;
-          }
-
-          /* Mobil einspaltig */
-          @media (max-width: 767.98px) {
-            #todo-lists-container {
-              column-count: 1;
-            }
-          }
-        </style>
-
-        <!-- Neue Liste anlegen -->
-        <form method="post" class="mb-2">
-          <input type="hidden" name="action" value="addList">
-          <input type="hidden" name="tokenCSRF" value="<?php echo $security->getTokenCSRF(); ?>">
-          <div class="form-group">
-            <label for="list-title" style="margin-bottom:0.15rem;font-size:0.85rem;">List title</label>
-            <input type="text" class="form-control" id="list-title" name="title" required>
-          </div>
-          <button type="submit" class="btn btn-primary">Add list</button>
-        </form>
-
-        <?php if (!empty($lists)): ?>
-          <?php $listsCount = count($lists); ?>
-
-          <div id="todo-lists-container">
-            <?php foreach ($lists as $index => $list): ?>
-              <div class="todo-list-column"
-                draggable="false"
-                data-list-id="<?php echo $this->escape($list['id']); ?>">
-
-                <div class="card">
-                  <div class="card-header d-flex justify-content-between align-items-center font-weight-bold todo-list-handle"
-                    draggable="true"> <span>
-                      <i class="fa fa-pencil-square-o"></i>
-                      <?php echo $this->escape($list['title']); ?>
-                    </span>
-
-                    <div class="btn-group" role="group">
-                      <!-- Liste nach oben -->
-                      <form method="post" style="margin:0;">
-                        <input type="hidden" name="action" value="moveListUp">
-                        <input type="hidden" name="tokenCSRF" value="<?php echo $security->getTokenCSRF(); ?>">
-                        <input type="hidden" name="id" value="<?php echo $this->escape($list['id']); ?>">
-                        <button type="submit"
-                          class="btn btn-sm btn-secondary"
-                          title="Move list up"
-                          aria-label="Move list up"
-                          <?php echo ($index === 0) ? 'disabled' : ''; ?>>
-                          <i class="fa fa-arrow-up"></i>
-                        </button>
-                      </form>
-
-                      <!-- Liste nach unten -->
-                      <form method="post" style="margin:0;">
-                        <input type="hidden" name="action" value="moveListDown">
-                        <input type="hidden" name="tokenCSRF" value="<?php echo $security->getTokenCSRF(); ?>">
-                        <input type="hidden" name="id" value="<?php echo $this->escape($list['id']); ?>">
-                        <button type="submit"
-                          class="btn btn-sm btn-secondary"
-                          title="Move list down"
-                          aria-label="Move list down"
-                          <?php echo ($index === $listsCount - 1) ? 'disabled' : ''; ?>>
-                          <i class="fa fa-arrow-down"></i>
-                        </button>
-                      </form>
-
-                      <!-- Liste loeschen -->
-                      <form method="post" style="margin:0;">
-                        <input type="hidden" name="action" value="deleteList">
-                        <input type="hidden" name="tokenCSRF" value="<?php echo $security->getTokenCSRF(); ?>">
-                        <input type="hidden" name="id" value="<?php echo $this->escape($list['id']); ?>">
-                        <button type="submit"
-                          class="btn btn-sm btn-danger"
-                          title="Delete list"
-                          aria-label="Delete list">
-                          <i class="fa fa-trash"></i>
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                  <div class="card-body">
-
-                    <!-- Bestehende Items -->
-                    <?php if (!empty($list['items'])): ?>
-                      <ul class="list-group mb-2">
-                        <?php foreach ($list['items'] as $item): ?>
-                          <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                              <form method="post" style="display:inline;">
-                                <input type="hidden" name="action" value="toggleItem">
-                                <input type="hidden" name="tokenCSRF" value="<?php echo $security->getTokenCSRF(); ?>">
-                                <input type="hidden" name="listId" value="<?php echo $this->escape($list['id']); ?>">
-                                <input type="hidden" name="itemId" value="<?php echo $this->escape($item['id']); ?>">
-                                <input type="checkbox" onchange="this.form.submit()" <?php echo $item['done'] ? 'checked' : ''; ?>>
-                              </form>
-                              <span style="<?php echo $item['done'] ? 'text-decoration: line-through;' : ''; ?>">
-                                <?php echo $this->escape($item['text']); ?>
-                              </span>
-                            </div>
-                            <form method="post" style="margin:0;">
-                              <input type="hidden" name="action" value="deleteItem">
-                              <input type="hidden" name="tokenCSRF" value="<?php echo $security->getTokenCSRF(); ?>">
-                              <input type="hidden" name="listId" value="<?php echo $this->escape($list['id']); ?>">
-                              <input type="hidden" name="itemId" value="<?php echo $this->escape($item['id']); ?>">
-                              <button type="submit" class="btn btn-sm btn-outline-danger">
-                                <i class="fa fa-trash"></i>
-                              </button>
-                            </form>
-                          </li>
-                        <?php endforeach; ?>
-                      </ul>
-                    <?php else: ?>
-                      <p>No items yet.</p>
-                    <?php endif; ?>
-
-                    <!-- Neues Item fuer diese Liste -->
-                    <form method="post" class="mt-1">
-                      <input type="hidden" name="action" value="addItem">
-                      <input type="hidden" name="tokenCSRF" value="<?php echo $security->getTokenCSRF(); ?>">
-                      <input type="hidden" name="listId" value="<?php echo $this->escape($list['id']); ?>">
-
-                      <div class="input-group">
-                        <input type="text" name="text" class="form-control" placeholder="New item..." required>
-                        <div class="input-group-append">
-                          <button type="submit" class="btn btn-secondary">
-                            <i class="fa fa-plus"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-
-                  </div>
-                </div>
-
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php else: ?>
-          <p>No todo lists yet.</p>
-        <?php endif; ?>
-
-      </div>
-    </div>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        // Container, der alle Listenspalten enthaelt
-        var container = document.getElementById('todo-lists-container');
-        if (!container) {
-          return;
-        }
-
-        var dragged = null;
-
-        // Drag nur ueber den Header (Handle) starten
-        container.querySelectorAll('.todo-list-handle').forEach(function(handle) {
-          handle.addEventListener('dragstart', function(e) {
-            var col = this.closest('.todo-list-column');
-            if (!col) {
-              return;
-            }
-            dragged = col;
-            e.dataTransfer.effectAllowed = 'move';
-            col.classList.add('dragging');
-          });
-
-          handle.addEventListener('dragend', function() {
-            var col = this.closest('.todo-list-column');
-            if (col) {
-              col.classList.remove('dragging');
-            }
-            dragged = null;
-          });
-        });
-
-        // Dragover auf den Spalten (Zielposition bestimmen)
-        container.querySelectorAll('.todo-list-column').forEach(function(col) {
-          col.addEventListener('dragover', function(e) {
-            // Standard verhindern, sonst wird drop nicht ausgeloest
-            e.preventDefault();
-            if (!dragged) {
-              return;
-            }
-
-            var target = this;
-            if (target === dragged) {
-              return;
-            }
-
-            e.dataTransfer.dropEffect = 'move';
-
-            var rect = target.getBoundingClientRect();
-            var middle = rect.top + rect.height / 2;
-
-            // Oben oder unten einfuegen, je nachdem, wo die Maus ist
-            if (e.clientY < middle) {
-              container.insertBefore(dragged, target);
-            } else {
-              container.insertBefore(dragged, target.nextSibling);
-            }
-          });
-        });
-
-        // Wenn der Drop abgeschlossen ist, Reihenfolge speichern
-        container.addEventListener('drop', function(e) {
-          e.preventDefault();
-          saveOrder();
-        });
-
-        // Reihenfolge per Fetch an PHP schicken
-        function saveOrder() {
-          var order = [];
-          container.querySelectorAll('.todo-list-column').forEach(function(col) {
-            var id = col.getAttribute('data-list-id');
-            if (id) {
-              order.push(id);
-            }
-          });
-
-          var formData = new FormData();
-          formData.append('action', 'reorderLists');
-          formData.append('tokenCSRF', '<?php echo $security->getTokenCSRF(); ?>');
-
-          // Array der IDs uebergeben
-          for (var i = 0; i < order.length; i++) {
-            formData.append('order[]', order[i]);
-          }
-
-          fetch('', {
-            method: 'POST',
-            credentials: 'same-origin',
-            body: formData
-          }).then(function(response) {
-            // Optional: Rueckmeldung verarbeiten
-            // console.log('Order saved');
-          }).catch(function(error) {
-            console.error('Error saving order', error);
-          });
-        }
-      });
-    </script>
-
-<?php
     return ob_get_clean();
   }
 
-  // Hilfsfunktionen -----------------------------------------------------
+  // Helpers -----------------------------------------------------
 
-  // Daten laden oder leeres Grundgeruest liefern
+  /**
+   * Load todo data or return an empty structure when no file exists.
+   *
+   * @return array
+   */
   private function loadData()
   {
     $file = $this->workspace() . $this->dbFile;
 
-    // Wenn Datei nicht existiert: leeres Geruest mit lists
+    // If file does not exist, return empty structure
     if (!file_exists($file)) {
       return array(
         'lists' => array()
@@ -451,8 +172,7 @@ class Todos extends Plugin
       );
     }
 
-    // Falls die Struktur aus Versehen nur ein Array ist (alte Migration),
-    // korrigieren wir das automatisch zu 'lists' => array(...)
+    // If the structure is an array (legacy), wrap it into the lists key
     if (isset($data[0]) && !isset($data['lists'])) {
       $data = array(
         'lists' => $data
@@ -466,12 +186,17 @@ class Todos extends Plugin
     return $data;
   }
 
-  // Daten speichern
+  /**
+   * Persist todo data to the workspace JSON file.
+   *
+   * @param array $data
+   * @return void
+   */
   private function saveData($data)
   {
     $file = $this->workspace() . $this->dbFile;
 
-    // Workspace Verzeichnis sicherstellen
+    // Ensure workspace directory exists
     if (!is_dir($this->workspace())) {
       mkdir($this->workspace(), 0755, true);
     }
@@ -482,7 +207,12 @@ class Todos extends Plugin
     );
   }
 
-  // Liste anlegen
+  /**
+   * Add a new list to the stored data.
+   *
+   * @param array $data Reference to stored todo data.
+   * @return void
+   */
   private function handleAddList(&$data)
   {
     $title = isset($_POST['title']) ? trim($_POST['title']) : '';
@@ -497,7 +227,12 @@ class Todos extends Plugin
     );
   }
 
-  // Liste loeschen
+  /**
+   * Delete a list by id.
+   *
+   * @param array $data Reference to stored todo data.
+   * @return void
+   */
   private function handleDeleteList(&$data)
   {
     $id = isset($_POST['id']) ? $_POST['id'] : '';
@@ -510,7 +245,13 @@ class Todos extends Plugin
     ));
   }
 
-  // Liste verschieben (direction: -1 nach oben, 1 nach unten)
+  /**
+   * Move a list up or down.
+   *
+   * @param array $data Reference to stored todo data.
+   * @param int   $direction -1 to move up, 1 to move down.
+   * @return void
+   */
   private function handleMoveList(&$data, $direction)
   {
     $id = isset($_POST['id']) ? $_POST['id'] : '';
@@ -544,7 +285,12 @@ class Todos extends Plugin
     $data['lists'][$newIndex] = $tmp;
   }
 
-  // Item hinzufuegen
+  /**
+   * Add an item to a list.
+   *
+   * @param array $data Reference to stored todo data.
+   * @return void
+   */
   private function handleAddItem(&$data)
   {
     $listId = isset($_POST['listId']) ? $_POST['listId'] : '';
@@ -566,7 +312,12 @@ class Todos extends Plugin
     }
   }
 
-  // Item loeschen
+  /**
+   * Delete an item from a list.
+   *
+   * @param array $data Reference to stored todo data.
+   * @return void
+   */
   private function handleDeleteItem(&$data)
   {
     $listId = isset($_POST['listId']) ? $_POST['listId'] : '';
@@ -585,7 +336,12 @@ class Todos extends Plugin
     }
   }
 
-  // Item Haken toggeln
+  /**
+   * Toggle the done state of an item.
+   *
+   * @param array $data Reference to stored todo data.
+   * @return void
+   */
   private function handleToggleItem(&$data)
   {
     $listId = isset($_POST['listId']) ? $_POST['listId'] : '';
@@ -604,27 +360,42 @@ class Todos extends Plugin
     }
   }
 
-  // Einfache ID Erzeugung
+  /**
+   * Generate a simple unique id with prefix.
+   *
+   * @param string $prefix
+   * @return string
+   */
   private function generateId($prefix)
   {
     return $prefix . uniqid();
   }
 
-  // Kleine Escape Hilfe fuer Ausgabe
+  /**
+   * Escape a string for safe HTML output.
+   *
+   * @param string $string
+   * @return string
+   */
   private function escape($string)
   {
     return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
   }
 
+  /**
+   * Render sidebar link in the admin navigation.
+   *
+   * @return string
+   */
   public function adminSidebar()
   {
-    // Pluginname anhand des Klassennamens
+    // Plugin name based on the class name
     $pluginName = Text::lowercase(__CLASS__);
 
-    // URL zur Admin-Ansicht
+    // URL to the plugin admin view
     $url = HTML_PATH_ADMIN_ROOT . 'plugin/' . $pluginName;
 
-    // Link im linken Admin-Menue ausgeben
+    // Output link in the left admin menu
     $html  = '<a class="nav-link" href="' . $url . '">';
     $html .= 'Todos';
     $html .= '</a>';
