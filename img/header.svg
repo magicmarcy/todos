@@ -30,9 +30,9 @@
   </g>
   <g transform="translate(92 86)" fill="#e2e8f0" font-family="Poppins, 'Segoe UI', sans-serif">
     <text x="0" y="0" font-size="14" letter-spacing="2" fill="#7dd3fc">BLUDIT PLUGIN</text>
-    <text x="0" y="46" font-size="44" font-weight="700">Todos, direkt im Dashboard</text>
-    <text x="0" y="82" font-size="20" fill="#cbd5e1">Schnelle Checklisten f&#252;r Redakteure und Site-Owner.</text>
-    <text x="0" y="112" font-size="16" fill="#94a3b8">Mehrere Listen, Drag-and-drop, Inline-Checkboxen und Auto-Save.</text>
+    <text x="0" y="46" font-size="44" font-weight="700">Todos, in your dashboard</text>
+    <text x="0" y="82" font-size="20" fill="#cbd5e1">Quick checklists for editors and site owners.</text>
+    <text x="0" y="112" font-size="16" fill="#94a3b8">Multiple lists, drag-and-drop, inline checkboxes and auto-save.</text>
     <rect x="0" y="136" width="180" height="4" rx="2" fill="url(#accentLine)"/>
   </g>
   <g transform="translate(720 58)">
@@ -56,9 +56,9 @@
         <path d="M1 4 l6 6 12 -12"/>
       </g>
       <g fill="#e2e8f0" font-family="Poppins, 'Segoe UI', sans-serif" font-size="18">
-        <text x="78" y="91">Release Notes erstellen</text>
-        <text x="78" y="145">Links pr&#252;fen &amp; abhaken</text>
-        <text x="78" y="199">SEO-Check f&#252;r neue Seiten</text>
+        <text x="78" y="91">Create release notes</text>
+        <text x="78" y="145">Check links &amp; tick</text>
+        <text x="78" y="199">SEO check for new pages</text>
       </g>
     </g>
     <g filter="url(#shadow)" transform="translate(80 34) scale(0.88)">
@@ -67,8 +67,8 @@
       <rect x="22" y="112" width="256" height="30" rx="10" fill="#111e34" stroke="#1f2937" stroke-width="1.2"/>
       <circle cx="38" cy="85" r="8" fill="#22c55e"/>
       <circle cx="38" cy="127" r="8" fill="#38bdf8"/>
-      <text x="58" y="90" font-family="Poppins, 'Segoe UI', sans-serif" font-size="14" fill="#cbd5e1">Redaktions-Tasks</text>
-      <text x="58" y="132" font-family="Poppins, 'Segoe UI', sans-serif" font-size="14" fill="#cbd5e1">Bugfixes notieren</text>
+      <text x="58" y="90" font-family="Poppins, 'Segoe UI', sans-serif" font-size="14" fill="#cbd5e1">Editorial tasks</text>
+      <text x="58" y="132" font-family="Poppins, 'Segoe UI', sans-serif" font-size="14" fill="#cbd5e1">Note bug fixes</text>
       <rect x="22" y="26" width="68" height="8" rx="4" fill="#22c55e" opacity="0.7"/>
       <rect x="100" y="26" width="46" height="8" rx="4" fill="#38bdf8" opacity="0.6"/>
     </g>
