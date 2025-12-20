@@ -1,3 +1,5 @@
+![Bludit Todos header](img/header.svg)
+
 ## Todos Plugin for Bludit
 
 This plugin adds lightweight todo lists directly to the Bludit admin area. It is aimed at editors and site owners who need to track small tasks without leaving the dashboard.
