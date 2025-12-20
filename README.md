@@ -50,3 +50,4 @@ If you enjoy this plugin and want to support its development, you can buy me a c
 - `css/todos.css` – compact admin styling.
 - `js/todos.js` – drag-and-drop ordering and checkbox submit helpers.
 - `todos.json` – data file created in the plugin workspace.
+
